@@ -30,6 +30,12 @@ def run_api():
     """Run the FastAPI server"""
     import uvicorn
     
+    # Check if we're on Render (has PORT environment variable)
+    if os.getenv('PORT'):
+        print("Detected Render environment - skipping API server")
+        print("Use start_render.py for dashboard deployment")
+        return
+    
     print("Starting LeadTool API Server...")
     uvicorn.run(
         "app.main:app",
@@ -49,11 +55,19 @@ def run_dashboard():
     # Try to use the same Python interpreter that's running this script
     python_exe = sys.executable
     
+    # Check if we're on Render
+    if os.getenv('PORT'):
+        print("Render environment detected - using render_dashboard.py")
+        dashboard_file = 'render_dashboard.py'
+    else:
+        print("Local environment - using simple_dashboard.py")
+        dashboard_file = 'simple_dashboard.py'
+    
     # If that doesn't work, try to find the correct Python with streamlit
     try:
         subprocess.run([
             python_exe, "-m", "streamlit", "run", 
-            "app/dashboard/main.py",
+            dashboard_file,
             "--server.port", "8501",
             "--server.address", "0.0.0.0"
         ], check=True)
@@ -72,7 +86,7 @@ def run_dashboard():
                 print(f"Trying: {python_path}")
                 subprocess.run([
                     python_path, "-m", "streamlit", "run", 
-                    "app/dashboard/main.py",
+                    dashboard_file,
                     "--server.port", "8501",
                     "--server.address", "0.0.0.0"
                 ], check=True)
@@ -121,6 +135,12 @@ def run_all():
 
 def main():
     """Main entry point"""
+    # Check if we're on Render and should run dashboard
+    if os.getenv('PORT') and len(sys.argv) == 1:
+        print("Detected Render environment - running dashboard")
+        run_dashboard()
+        return
+    
     parser = argparse.ArgumentParser(
         description="LeadTool - Unified Lead Generation and Management System"
     )
