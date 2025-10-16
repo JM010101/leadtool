@@ -20,6 +20,28 @@ except ImportError as e:
     st.error(f"Database import error: {e}")
     DATABASE_AVAILABLE = False
 
+def run_scraper():
+    """Run the scraper and return status"""
+    try:
+        import subprocess
+        import sys
+        import os
+        
+        # Run the scraper command
+        result = subprocess.run(
+            [sys.executable, "run.py", "scraper"],
+            capture_output=True,
+            text=True,
+            cwd=os.getcwd()
+        )
+        
+        if result.returncode == 0:
+            return True, "Scraper completed successfully!"
+        else:
+            return False, f"Scraper failed: {result.stderr}"
+    except Exception as e:
+        return False, f"Error running scraper: {str(e)}"
+
 def main():
     """Main dashboard application"""
     st.title("📊 LeadTool Dashboard")
@@ -27,6 +49,38 @@ def main():
     
     # Debug info
     st.sidebar.info("✅ Using render_dashboard.py (Render Optimized)")
+    
+    # Add scraping controls
+    st.sidebar.header("🕷️ Scraping Controls")
+    
+    if st.sidebar.button("🚀 Run Scraper", type="primary"):
+        with st.spinner("Running scraper..."):
+            success, message = run_scraper()
+            if success:
+                st.sidebar.success(message)
+                st.rerun()  # Refresh the page to show new data
+            else:
+                st.sidebar.error(message)
+    
+    # Show last scraping info
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Last Scraping")
+    
+    # Get last scraping time from database
+    if DATABASE_AVAILABLE:
+        db = SessionLocal()
+        try:
+            last_scraping = db.query(MonthlyData).order_by(MonthlyData.scraped_at.desc()).first()
+            if last_scraping:
+                st.sidebar.info(f"Last run: {last_scraping.scraped_at.strftime('%Y-%m-%d %H:%M:%S')}")
+            else:
+                st.sidebar.info("No scraping data found")
+        except Exception as e:
+            st.sidebar.error(f"Error getting last scraping info: {e}")
+        finally:
+            db.close()
+    else:
+        st.sidebar.info("Database not available")
     
     if not DATABASE_AVAILABLE:
         st.error("Database not available. Using sample data.")
