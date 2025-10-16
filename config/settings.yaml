@@ -1,0 +1,122 @@
+# LeadTool Application Settings
+
+# Application settings
+app:
+  name: "LeadTool"
+  version: "1.0.0"
+  description: "Unified Lead Generation and Management System"
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+
+# API settings
+api:
+  title: "LeadTool API"
+  description: "Unified Lead Generation and Management System API"
+  version: "1.0.0"
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+  openapi_url: "/openapi.json"
+
+# Dashboard settings
+dashboard:
+  title: "LeadTool Dashboard"
+  page_icon: "📊"
+  layout: "wide"
+  theme: "light"
+  api_base_url: "http://localhost:8000/api/v1"
+
+# Scraping settings
+scraping:
+  # Default delay between requests (seconds)
+  delay: 2
+  
+  # Random delay range
+  random_delay: 0.5
+  
+  # Maximum concurrent requests
+  concurrent_requests: 16
+  concurrent_requests_per_domain: 8
+  
+  # Request timeout (seconds)
+  timeout: 30
+  
+  # Retry settings
+  retry_times: 3
+  retry_http_codes: [500, 502, 503, 504, 408, 429]
+  
+  # User agent
+  user_agent: "LeadTool/1.0 (+https://leadtool.example.com)"
+  
+  # Respect robots.txt
+  respect_robots: false
+  
+  # AutoThrottle settings
+  autothrottle_enabled: true
+  autothrottle_start_delay: 1
+  autothrottle_max_delay: 10
+  autothrottle_target_concurrency: 1.0
+
+# Scheduler settings
+scheduler:
+  # Monthly scraping schedule (cron format)
+  monthly_schedule: "0 2 1 * *"  # 1st of every month at 2 AM
+  
+  # Backup schedule (cron format)
+  backup_schedule: "0 2 15 * *"  # 15th of every month at 2 AM
+  
+  # Data retention (months)
+  data_retention_months: 12
+  
+  # Timezone
+  timezone: "UTC"
+
+# Logging settings
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/leadtool.log"
+  max_size: "10MB"
+  backup_count: 5
+
+# Export settings
+export:
+  # Default export format
+  default_format: "csv"
+  
+  # Supported formats
+  supported_formats: ["csv", "excel"]
+  
+  # Maximum rows per export
+  max_rows: 10000
+  
+  # Export timeout (seconds)
+  timeout: 300
+
+# Security settings
+security:
+  # CORS origins
+  cors_origins: ["*"]
+  
+  # API key for external access (optional)
+  api_key: null
+  
+  # Rate limiting
+  rate_limit: "100/minute"
+  
+  # Session timeout (minutes)
+  session_timeout: 60
+
+# Monitoring settings
+monitoring:
+  # Health check endpoint
+  health_check: true
+  
+  # Metrics endpoint
+  metrics: true
+  
+  # Performance monitoring
+  performance: true
+  
+  # Error tracking
+  error_tracking: true

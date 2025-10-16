@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # LeadTool API
+  leadtool-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://leadtool:password@db:5432/leadtool
+      - DEBUG=false
+    depends_on:
+      - db
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # LeadTool Dashboard
+  leadtool-dashboard:
+    build: .
+    command: streamlit run app/dashboard/main.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://leadtool-api:8000/api/v1
+    depends_on:
+      - leadtool-api
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  # LeadTool Scheduler
+  leadtool-scheduler:
+    build: .
+    command: python3.11 app/scheduler/cron.py
+    environment:
+      - DATABASE_URL=postgresql://leadtool:password@db:5432/leadtool
+    depends_on:
+      - db
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: leadtool
+      POSTGRES_USER: leadtool
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis (for Celery if needed)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

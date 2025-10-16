@@ -1,0 +1,51 @@
+# LeadTool Database Configuration
+
+# Development database (SQLite)
+development:
+  type: "sqlite"
+  url: "sqlite:///./data/leadtool.db"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+  pool_timeout: 30
+  pool_recycle: 3600
+
+# Production database (PostgreSQL)
+production:
+  type: "postgresql"
+  url: "postgresql://username:password@localhost:5432/leadtool"
+  echo: false
+  pool_size: 20
+  max_overflow: 30
+  pool_timeout: 30
+  pool_recycle: 3600
+  pool_pre_ping: true
+
+# Test database
+test:
+  type: "sqlite"
+  url: "sqlite:///./data/leadtool_test.db"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+  pool_timeout: 30
+  pool_recycle: 3600
+
+# Database settings
+settings:
+  # Create tables automatically
+  create_tables: true
+  
+  # Drop tables on startup (use with caution)
+  drop_tables: false
+  
+  # Enable foreign key constraints
+  foreign_keys: true
+  
+  # Connection pool settings
+  pool_pre_ping: true
+  pool_recycle: 3600
+  
+  # Logging
+  log_queries: false
+  log_level: "INFO"

@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: leadtool-dashboard
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run simple_dashboard.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: leadtool-db
+          property: connectionString
+
+  - type: web
+    name: leadtool-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 10001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: leadtool-db
+          property: connectionString
+
+databases:
+  - name: leadtool-db
+    plan: free
