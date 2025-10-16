@@ -1,108 +1,37 @@
 #!/usr/bin/env python
 """
-Simple dashboard that reads directly from database
+Render-specific dashboard that reads directly from database
+No API calls - direct database access only
 """
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import subprocess
 import os
 import sys
 from datetime import datetime
-from app.models.database import SessionLocal, Company, Contact, MonthlyData
 
-def run_scraper():
-    """Run the scraper and return status"""
-    try:
-        # Run the scraper command
-        result = subprocess.run(
-            [sys.executable, "run.py", "scraper"],
-            capture_output=True,
-            text=True,
-            cwd=os.getcwd()
-        )
-        
-        if result.returncode == 0:
-            return True, "Scraper completed successfully!"
-        else:
-            return False, f"Scraper failed: {result.stderr}"
-    except Exception as e:
-        return False, f"Error running scraper: {str(e)}"
+# Add the app directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
+
+try:
+    from app.models.database import SessionLocal, Company, Contact, MonthlyData
+    DATABASE_AVAILABLE = True
+except ImportError as e:
+    st.error(f"Database import error: {e}")
+    DATABASE_AVAILABLE = False
 
 def main():
-    """Simple dashboard that reads directly from database"""
+    """Main dashboard application"""
     st.title("📊 LeadTool Dashboard")
     st.markdown("Unified Lead Generation and Management System")
     
     # Debug info
-    st.sidebar.info("✅ Using simple_dashboard.py (Database Direct)")
+    st.sidebar.info("✅ Using render_dashboard.py (Render Optimized)")
     
-    # Add scraping controls
-    st.sidebar.header("🕷️ Scraping Controls")
-    
-    if st.sidebar.button("🚀 Run Scraper", type="primary"):
-        with st.spinner("Running scraper..."):
-            success, message = run_scraper()
-            if success:
-                st.sidebar.success(message)
-                st.rerun()  # Refresh the page to show new data
-            else:
-                st.sidebar.error(message)
-    
-    # Show last scraping info
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Last Scraping")
-    
-    # Get last scraping time from database
-    db = SessionLocal()
-    try:
-        last_scraping = db.query(MonthlyData).order_by(MonthlyData.scraped_at.desc()).first()
-        if last_scraping:
-            st.sidebar.info(f"Last run: {last_scraping.scraped_at.strftime('%Y-%m-%d %H:%M:%S')}")
-        else:
-            st.sidebar.info("No scraping data found")
-    except Exception as e:
-        st.sidebar.error(f"Error getting last scraping info: {e}")
-    finally:
-        db.close()
-    
-    # Show scraping configuration
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Scraping Config")
-    
-    # Read current config
-    try:
-        import yaml
-        config_path = "config/sites.yaml"
-        if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
-            
-            search_queries = config.get('search_queries', [])
-            st.sidebar.write(f"**Active Queries:** {len(search_queries)}")
-            
-            for i, query in enumerate(search_queries[:3]):  # Show first 3
-                st.sidebar.write(f"• {query.get('name', 'Unknown')}")
-            
-            if len(search_queries) > 3:
-                st.sidebar.write(f"... and {len(search_queries) - 3} more")
-        else:
-            st.sidebar.warning("Config file not found")
-    except Exception as e:
-        st.sidebar.error(f"Error reading config: {e}")
-    
-    # Add manual scraping options
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("Manual Search")
-    
-    with st.sidebar.form("manual_search"):
-        keywords = st.text_input("Keywords", value="restaurants")
-        location = st.text_input("Location", value="New York, NY")
-        max_results = st.number_input("Max Results", value=50, min_value=1, max_value=500)
-        
-        if st.form_submit_button("🔍 Search Now"):
-            # This would trigger a custom search
-            st.sidebar.info("Custom search feature coming soon!")
+    if not DATABASE_AVAILABLE:
+        st.error("Database not available. Using sample data.")
+        show_sample_data()
+        return
     
     # Get data directly from database
     db = SessionLocal()
@@ -217,46 +146,25 @@ def main():
                 else:
                     st.info("No source data available")
         
-        # Scraping Status Section
-        st.markdown("---")
-        st.subheader("🕷️ Scraping Status")
-        
-        # Show scraping statistics
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            total_scraped = len(monthly_data)
-            st.metric("Total Scraped Items", total_scraped)
-        
-        with col2:
-            active_items = len([d for d in monthly_data if d.is_active])
-            st.metric("Active Items", active_items)
-        
-        with col3:
-            unique_queries = len(set([d.query_name for d in monthly_data if d.query_name]))
-            st.metric("Search Queries", unique_queries)
-        
-        # Show recent scraping activity
-        if monthly_data:
-            st.subheader("Recent Scraping Activity")
-            recent_data = sorted(monthly_data, key=lambda x: x.scraped_at or datetime.min, reverse=True)[:10]
-            
-            activity_data = []
-            for data in recent_data:
-                activity_data.append({
-                    "Time": data.scraped_at.strftime("%Y-%m-%d %H:%M:%S") if data.scraped_at else "Unknown",
-                    "Query": data.query_name or "Unknown",
-                    "Type": data.data_type,
-                    "Active": "✅" if data.is_active else "❌"
-                })
-            
-            activity_df = pd.DataFrame(activity_data)
-            st.dataframe(activity_df, use_container_width=True)
-        
     except Exception as e:
         st.error(f"Error loading data: {e}")
+        st.info("This might be a database connection issue. Check your DATABASE_URL environment variable.")
     finally:
         db.close()
+
+def show_sample_data():
+    """Show sample data when database is not available"""
+    st.info("Showing sample data (database not available)")
+    
+    # Sample data
+    sample_companies = [
+        {"Name": "Sample Restaurant 1", "Category": "Restaurant", "Rating": "4.5"},
+        {"Name": "Sample Restaurant 2", "Category": "Restaurant", "Rating": "4.2"},
+        {"Name": "Sample Restaurant 3", "Category": "Restaurant", "Rating": "4.8"}
+    ]
+    
+    df = pd.DataFrame(sample_companies)
+    st.dataframe(df, use_container_width=True)
 
 if __name__ == "__main__":
     main()

@@ -14,15 +14,16 @@ def main():
     # Get port from environment variable
     port = os.getenv('PORT', '10000')
     
-    # Start Streamlit
+    # Start Streamlit with the correct dashboard
     cmd = [
         sys.executable, '-m', 'streamlit', 'run', 
-        'simple_dashboard.py',
+        'render_dashboard.py',
         '--server.port', port,
         '--server.address', '0.0.0.0',
         '--server.headless', 'true',
         '--server.enableCORS', 'false',
-        '--server.enableXsrfProtection', 'false'
+        '--server.enableXsrfProtection', 'false',
+        '--server.fileWatcherType', 'none'
     ]
     
     print(f"Running command: {' '.join(cmd)}")
